@@ -1,11 +1,7 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, signInWithPopup  } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
  
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDDlNTt4Q5C7aWmImDScXpPnMTMg0XNp14",
   authDomain: "crwn-db-460f0.firebaseapp.com",
@@ -15,13 +11,48 @@ const firebaseConfig = {
   appId: "1:1069218484506:web:347b75bdf58a513b5cdca3",
   measurementId: "G-YD3HRY8E3G"
 };
+
  
-// Initialize Firebase
-initializeApp(firebaseConfig);
+const firebaseApp = initializeApp(firebaseConfig);
+ 
+export const db = getFirestore(firebaseApp);
+ 
+export const createUserProfileDocument = async (
+  userAuth,
+  additionalData = {}
+) => {
+  if (!userAuth) return;
+ 
+  const userRef = doc(db, "users", `${userAuth.uid}`);
+ 
+  const snapShot = await getDoc(userRef);
+ 
+  if (!snapShot.exists()) {
+    const { displayName, email } = userAuth;
+    const createdAt = new Date();
+ 
+    try {
+      await setDoc(userRef, {
+        displayName,
+        email,
+        createdAt,
+        ...additionalData,
+      });
+    } catch (error) {
+      console.log("error", error.message);
+    }
+  }
+ 
+  return userRef;
+};
  
 export const auth = getAuth();
 export const firestore = getFirestore();
  
 const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ params: 'select_account' });
-export const signInWithGoogle = () => signInWithPopup(auth, provider);
+provider.setCustomParameters({ prompt: "select_account" });
+ 
+export const signInWithGoogle = () =>
+  signInWithPopup(auth, provider).catch((error) => console.log(error));
+ 
+// export default firebase;
